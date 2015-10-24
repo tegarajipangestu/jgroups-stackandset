@@ -22,8 +22,4 @@ public class ReplSet<T> {
     {
         set.contains(element);
     }
-    public void eventLoop()
-    {
-
-    }
 }
