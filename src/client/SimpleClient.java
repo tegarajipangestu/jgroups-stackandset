@@ -4,12 +4,12 @@ import org.jgroups.JChannel;
 import org.jgroups.Message;
 import org.jgroups.ReceiverAdapter;
 import org.jgroups.View;
+import org.jgroups.util.Util;
 import set.ReplSet;
 import stack.ReplStack;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.util.List;
 
 /**
  * Created by tegar on 25/10/15.
@@ -29,7 +29,7 @@ public class SimpleClient extends ReceiverAdapter {
     @Override
     public void receive(Message msg) {
         String line = msg.getObject().toString();
-        if (!replStack.equals(null))
+        if (channel.getClusterName().equals("StackCluster"))
         {
             if (line.substring(0, line.indexOf(' ')).equals("push")) {
                 replStack.push(line.substring(line.indexOf(' ')));
@@ -39,7 +39,7 @@ public class SimpleClient extends ReceiverAdapter {
                 System.out.println("Popped String : "+poppedString);
             }
         }
-        if (!replSet.equals(null))
+        if (channel.getClusterName().equals("SetCluster"))
         {
             if (line.substring(0, line.indexOf(' ')).equals("add")) {
                 replSet.add(line.substring(line.indexOf(' ')));
@@ -59,6 +59,7 @@ public class SimpleClient extends ReceiverAdapter {
 
     private void start() throws Exception {
         channel.setReceiver(this);
+        channel.getState(null,0);
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         channel=new JChannel();
         System.out.println("Type \"stack\" to stack and type \"set\" to set ");
@@ -77,6 +78,37 @@ public class SimpleClient extends ReceiverAdapter {
         }
         channel.close();
     }
+
+    public void getState(OutputStream output) throws Exception {
+        if (channel.getClusterName().equals("StackCluster"))
+        {
+            synchronized(replStack) {
+                Util.objectToStream(replStack, new DataOutputStream(output));
+            }
+        }
+        else if (channel.getClusterName().equals("SetCluster"))
+        {
+            synchronized(replSet) {
+                Util.objectToStream(replSet, new DataOutputStream(output));
+            }
+        }
+    }
+
+    public void setState(InputStream input) throws Exception {
+        if (channel.getClusterName().equals("StackCluster"))
+        {
+            synchronized(replStack) {
+                replStack = (ReplStack<String>)Util.objectFromStream(new DataInputStream(input));
+            }
+        }
+        else if (channel.getClusterName().equals("SetCluster"))
+        {
+            synchronized(replSet) {
+                replSet = (ReplSet<String>)Util.objectFromStream(new DataInputStream(input));
+            }
+        }
+    }
+
 
     public void eventLoopSet() throws Exception {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
