@@ -5,12 +5,10 @@ import org.jgroups.util.Util;
 import set.ReplSet;
 import stack.ReplStack;
 
-import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by tegar on 25/10/15.
@@ -27,19 +25,28 @@ public class SimpleClient extends ReceiverAdapter {
     public SimpleClient()
     {
         members = new ArrayList<>();
-        replStack = new ReplStack<>();
-        replSet = new ReplSet<>();
+//        replStack = new ReplStack<>();
+//        replSet = new ReplSet<>();
     }
 
     @Override
     public void viewAccepted(View new_view) {
-        member_size =new_view.size();
         members.clear();
         members.addAll(new_view.getMembers());
-        if (!members.isEmpty())
+        if (members.size()==1)
+        {
+            if (channel.getClusterName().equals("StackCluster"))
+                replStack = new ReplStack<>();
+            else if (channel.getClusterName().equals("SetCluster"))
+                replSet = new ReplSet<>();
+        }
+        if (!members.isEmpty() && (channel.getAddress() != null && !channel.getAddress().equals(members.get(0))))
         {
             try {
-                channel.getState(members.get(0),10000);
+                if (replStack==null && channel.getClusterName().equals("StackCluster"))
+                    channel.getState(null,10000);
+                else if (replStack==null && channel.getClusterName().equals("StackCluster"))
+                    channel.getState(null,10000);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -54,7 +61,7 @@ public class SimpleClient extends ReceiverAdapter {
         if (channel.getClusterName().equals("StackCluster"))
         {
             if (line.substring(0, line.indexOf(' ')).equals("push")) {
-                replStack.push(line.substring(line.indexOf(' ')));
+                replStack.push(line.substring(line.indexOf(' ')+1));
             }
             else if (line.substring(0, line.indexOf(' ')).equals("pop")) {
                 String poppedString = (String) replStack.pop();
@@ -82,7 +89,6 @@ public class SimpleClient extends ReceiverAdapter {
     private void start() throws Exception {
         channel = new JChannel();
 
-
         channel.setReceiver(this);
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         System.out.println("Type \"stack\" to stack and type \"set\" to set ");
@@ -92,10 +98,14 @@ public class SimpleClient extends ReceiverAdapter {
             channel.connect("StackCluster");
             eventLoopStack();
         }
-        else
+        else if (line.equals("set"))
         {
             channel.connect("SetCluster");
             eventLoopSet();
+        }
+        else
+        {
+            System.err.println("Unknown Data type");
         }
         channel.close();
     }
@@ -104,25 +114,23 @@ public class SimpleClient extends ReceiverAdapter {
         List<String> list = new ArrayList<>();
         if (channel.getClusterName().equals("StackCluster"))
         {
-            if(replStack == null)
-                return;
             synchronized(list) {
-                ReplStack<String> temp = replStack;
-                while (!temp.isEmpty())
+//                ReplStack<String> temp = replStack;
+                Iterator<String> iter = replStack.getIterator();
+                while (iter.hasNext())
                 {
-                    list.add(temp.pop());
+                    list.add(iter.next());
                 }
 //                dos.flush();
                 Util.objectToStream(list, new ObjectOutputStream(output));
+                System.out.println("wrote " + replStack.size() + " elements");
             }
         }
         else if (channel.getClusterName().equals("SetCluster"))
         {
-            if(replSet == null)
-                return;
             synchronized(list) {
-                ReplSet<String> temp = replSet;
-                Iterator<String> iter = temp.getIterator();
+//                ReplSet<String> temp = replSet;
+                Iterator<String> iter = replSet.getIterator();
                 while(iter.hasNext())
                 {
                     String s = iter.next();
@@ -131,7 +139,7 @@ public class SimpleClient extends ReceiverAdapter {
                 }
 //                dos.flush();
                 Util.objectToStream(list, new ObjectOutputStream(output));
-                System.out.println("wrote " + replSet.size() + " elements");
+                System.out.println("wrote " + list.size() + " elements");
             }
         }
     }
@@ -141,6 +149,7 @@ public class SimpleClient extends ReceiverAdapter {
         List<String> temp = new ArrayList<>();
         if (channel.getClusterName().equals("StackCluster"))
         {
+            replStack = new ReplStack<>();
             synchronized(replStack) {
                 temp = (List<String>)Util.objectFromStream(new ObjectInputStream(input));
                 Iterator<String> iter = temp.iterator();
@@ -153,6 +162,7 @@ public class SimpleClient extends ReceiverAdapter {
         }
         else if (channel.getClusterName().equals("SetCluster"))
         {
+            replSet = new ReplSet<>();
             synchronized(replSet) {
                 temp = (List<String>)Util.objectFromStream(new ObjectInputStream(input));
                 Iterator<String> iter = temp.iterator();
@@ -163,7 +173,7 @@ public class SimpleClient extends ReceiverAdapter {
                 }
             }
         }
-        System.out.println("Getting " + temp.size() + " pieces of shit");
+        System.out.println("Getting " + temp.size() + " elements");
     }
 
 
@@ -174,12 +184,10 @@ public class SimpleClient extends ReceiverAdapter {
         {
             try {
                 if (line.substring(0, line.indexOf(' ')).equals("add")) {
-                    System.out.println("Sent message : "+line);
                     sendMessage(line);
                     replSet.add(line.substring(line.indexOf(' ')+1));
                 }
                 else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
-                    System.out.println("Sent message : "+line);
                     sendMessage(line);
                     if (replSet.remove(line.substring(line.indexOf(' ')+1)))
                         System.out.println(line.substring(line.indexOf(' ')+1)+" has been removed");
@@ -216,15 +224,12 @@ public class SimpleClient extends ReceiverAdapter {
         {
             try {
                 if (line.contains("push")) {
-                    System.out.println("Sent message : "+line);
                     sendMessage(line);
                     replStack.push(line.substring(line.indexOf(' ') + 1));
                 }
                 else if (line.equals("pop")) {
-                    System.out.println("Sent message : "+line);
                     sendMessage(line);
                     String poppedString = (String) replStack.pop();
-                    System.out.println("Popped string = "+poppedString);
                 }
                 else if (line.equals("top")) {
                     System.out.println(replStack.top());
