@@ -18,7 +18,6 @@ public class SimpleClient extends ReceiverAdapter {
     JChannel channel;
     ReplStack<String> replStack;
     ReplSet <String> replSet;
-    int member_size;
     List<Address> members;
 
 
@@ -45,7 +44,7 @@ public class SimpleClient extends ReceiverAdapter {
             try {
                 if (replStack==null && channel.getClusterName().equals("StackCluster"))
                     channel.getState(null,10000);
-                else if (replStack==null && channel.getClusterName().equals("StackCluster"))
+                else if (replSet==null && channel.getClusterName().equals("SetCluster"))
                     channel.getState(null,10000);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -71,7 +70,7 @@ public class SimpleClient extends ReceiverAdapter {
         if (channel.getClusterName().equals("SetCluster"))
         {
             if (line.substring(0, line.indexOf(' ')).equals("add")) {
-                replSet.add(line.substring(line.indexOf(' ')));
+                replSet.add(line.substring(line.indexOf(' ')+1));
             }
             else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
                 if (replSet.remove(line.substring(line.indexOf(' '))))
