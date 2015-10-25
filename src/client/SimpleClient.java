@@ -9,7 +9,6 @@ import set.ReplSet;
 import stack.ReplStack;
 
 import java.io.*;
-import java.util.List;
 
 /**
  * Created by tegar on 25/10/15.
@@ -17,7 +16,6 @@ import java.util.List;
 
 public class SimpleClient extends ReceiverAdapter {
     JChannel channel;
-    String user_name=System.getProperty("user.name", "n/a");
     ReplStack<String> replStack;
     ReplSet <String> replSet;
 
@@ -115,15 +113,15 @@ public class SimpleClient extends ReceiverAdapter {
         String line = in.readLine();
         while (!line.equals("quit"))
             if (line.substring(0, line.indexOf(' ')).equals("add")) {
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append("add ")
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("add ")
                         .append(line.substring(line.indexOf(' ')));
                 sendMessage(line);
                 replSet.add(line.substring(line.indexOf(' ')));
             }
             else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append("add ")
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("add ")
                         .append(line.substring(line.indexOf(' ')));
                 sendMessage(line);
                 replSet.add(line.substring(line.indexOf(' ')));
@@ -143,15 +141,15 @@ public class SimpleClient extends ReceiverAdapter {
         String line = in.readLine();
         while (!line.equals("quit"))
             if (line.substring(0, line.indexOf(' ')).equals("push")) {
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append("add ")
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("add ")
                         .append(line.substring(line.indexOf(' ')));
                 sendMessage(line);
                 replStack.push(line.substring(line.indexOf(' ')));
             }
             else if (line.substring(0, line.indexOf(' ')).equals("pop")) {
-                StringBuffer stringBuffer = new StringBuffer();
-                stringBuffer.append("add ")
+                StringBuilder stringBuilder = new StringBuilder();
+                stringBuilder.append("add ")
                         .append(line.substring(line.indexOf(' ')));
                 sendMessage(line);
                 replStack.push(line.substring(line.indexOf(' ')));

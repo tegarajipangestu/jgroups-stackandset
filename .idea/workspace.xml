@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="6ee8c65e-90fd-4e15-8f86-0bb3ceff1d1c" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/client/SimpleClient.java" afterPath="$PROJECT_DIR$/src/client/SimpleClient.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="jgroups-adt.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -68,12 +67,12 @@
       <file leaf-file-name="SimpleClient.java" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/client/SimpleClient.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5335413">
-              <caret line="66" column="33" selection-start-line="66" selection-start-column="33" selection-end-line="66" selection-end-column="33" />
+            <state vertical-scroll-proportion="0.3650546">
+              <caret line="13" column="27" selection-start-line="13" selection-start-column="27" selection-end-line="13" selection-end-column="27" />
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#551#552#0" expanded="true" />
-                <element signature="e#609#610#0" expanded="true" />
+                <element signature="e#467#468#0" expanded="true" />
+                <element signature="e#525#526#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -490,12 +489,12 @@
       <created>1445704133638</created>
       <option name="number" value="Default" />
       <updated>1445704133638</updated>
-      <workItem from="1445704143016" duration="8725000" />
+      <workItem from="1445704143016" duration="8981000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="8725000" />
+    <option name="totallyTimeSpent" value="8981000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="65" y="24" width="1301" height="744" extended-state="6" />
@@ -587,12 +586,12 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/client/SimpleClient.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5335413">
-          <caret line="66" column="33" selection-start-line="66" selection-start-column="33" selection-end-line="66" selection-end-column="33" />
+        <state vertical-scroll-proportion="0.3650546">
+          <caret line="13" column="27" selection-start-line="13" selection-start-column="27" selection-end-line="13" selection-end-column="27" />
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#551#552#0" expanded="true" />
-            <element signature="e#609#610#0" expanded="true" />
+            <element signature="e#467#468#0" expanded="true" />
+            <element signature="e#525#526#0" expanded="true" />
           </folding>
         </state>
       </provider>
