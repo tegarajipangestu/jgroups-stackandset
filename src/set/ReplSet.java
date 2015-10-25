@@ -22,4 +22,8 @@ public class ReplSet<T> {
     {
         set.contains(element);
     }
+    public boolean remove(T element)
+    {
+        return set.remove(element);
+    }
 }
