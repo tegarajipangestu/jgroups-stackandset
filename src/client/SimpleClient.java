@@ -8,6 +8,7 @@ import set.ReplSet;
 import stack.ReplStack;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 
 /**
@@ -36,6 +37,16 @@ public class SimpleClient extends ReceiverAdapter {
             else if (line.substring(0, line.indexOf(' ')).equals("pop")) {
                 String poppedString = replStack.pop();
                 System.out.println("Popped String : "+poppedString);
+            }
+        }
+        if (!replSet.equals(null))
+        {
+            if (line.substring(0, line.indexOf(' ')).equals("add")) {
+                replSet.add(line.substring(line.indexOf(' ')));
+            }
+            else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
+                if (replSet.remove(line.substring(line.indexOf(' '))))
+                    System.out.println(line.substring(line.indexOf(' '))+" has been removed");
             }
         }
         System.out.println(msg.getSrc() + ": " + msg.getObject());
@@ -67,9 +78,27 @@ public class SimpleClient extends ReceiverAdapter {
         channel.close();
     }
 
-    public void eventLoopSet()
-    {
-
+    public void eventLoopSet() throws Exception {
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        String line = in.readLine();
+        while (!line.equals("quit"))
+            if (line.substring(0, line.indexOf(' ')).equals("add")) {
+                StringBuffer stringBuffer = new StringBuffer();
+                stringBuffer.append("add ")
+                        .append(line.substring(line.indexOf(' ')));
+                sendMessage(line);
+                replSet.add(line.substring(line.indexOf(' ')));
+            }
+            else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
+                StringBuffer stringBuffer = new StringBuffer();
+                stringBuffer.append("add ")
+                        .append(line.substring(line.indexOf(' ')));
+                sendMessage(line);
+                replSet.add(line.substring(line.indexOf(' ')));
+            }
+            else if (line.substring(0, line.indexOf(' ')).equals("top")) {
+                System.out.println(replStack.top());
+            }
     }
 
     public void sendMessage(String line) throws Exception {
