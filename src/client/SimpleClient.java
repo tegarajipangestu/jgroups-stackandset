@@ -1,14 +1,16 @@
 package client;
 
-import org.jgroups.JChannel;
-import org.jgroups.Message;
-import org.jgroups.ReceiverAdapter;
-import org.jgroups.View;
+import org.jgroups.*;
 import org.jgroups.util.Util;
 import set.ReplSet;
 import stack.ReplStack;
 
+import java.awt.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by tegar on 25/10/15.
@@ -18,9 +20,31 @@ public class SimpleClient extends ReceiverAdapter {
     JChannel channel;
     ReplStack<String> replStack;
     ReplSet <String> replSet;
+    int member_size;
+    List<Address> members;
+
+
+    public SimpleClient()
+    {
+        members = new ArrayList<>();
+        replStack = new ReplStack<>();
+        replSet = new ReplSet<>();
+    }
 
     @Override
     public void viewAccepted(View new_view) {
+        member_size =new_view.size();
+        members.clear();
+        members.addAll(new_view.getMembers());
+        if (!members.isEmpty())
+        {
+            try {
+                channel.getState(members.get(0),10000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
         System.out.println("** view: " + new_view);
     }
 
@@ -33,7 +57,7 @@ public class SimpleClient extends ReceiverAdapter {
                 replStack.push(line.substring(line.indexOf(' ')));
             }
             else if (line.substring(0, line.indexOf(' ')).equals("pop")) {
-                String poppedString = replStack.pop();
+                String poppedString = (String) replStack.pop();
                 System.out.println("Popped String : "+poppedString);
             }
         }
@@ -56,55 +80,90 @@ public class SimpleClient extends ReceiverAdapter {
     }
 
     private void start() throws Exception {
+        channel = new JChannel();
+
+
         channel.setReceiver(this);
-        channel.getState(null,0);
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-        channel=new JChannel();
         System.out.println("Type \"stack\" to stack and type \"set\" to set ");
         String line=in.readLine().toLowerCase();
         if (line.equals("stack"))
         {
             channel.connect("StackCluster");
-            replStack = new ReplStack<>();
             eventLoopStack();
         }
         else
         {
             channel.connect("SetCluster");
-            replSet = new ReplSet<>();
             eventLoopSet();
         }
         channel.close();
     }
 
     public void getState(OutputStream output) throws Exception {
+        List<String> list = new ArrayList<>();
         if (channel.getClusterName().equals("StackCluster"))
         {
-            synchronized(replStack) {
-                Util.objectToStream(replStack, new DataOutputStream(output));
+            if(replStack == null)
+                return;
+            synchronized(list) {
+                ReplStack<String> temp = replStack;
+                while (!temp.isEmpty())
+                {
+                    list.add(temp.pop());
+                }
+//                dos.flush();
+                Util.objectToStream(list, new ObjectOutputStream(output));
             }
         }
         else if (channel.getClusterName().equals("SetCluster"))
         {
-            synchronized(replSet) {
-                Util.objectToStream(replSet, new DataOutputStream(output));
+            if(replSet == null)
+                return;
+            synchronized(list) {
+                ReplSet<String> temp = replSet;
+                Iterator<String> iter = temp.getIterator();
+                while(iter.hasNext())
+                {
+                    String s = iter.next();
+                    list.add(s);
+//                    dos.writeChars(s);
+                }
+//                dos.flush();
+                Util.objectToStream(list, new ObjectOutputStream(output));
+                System.out.println("wrote " + replSet.size() + " elements");
             }
         }
     }
 
     public void setState(InputStream input) throws Exception {
+//        System.out.println(Util.objectFromStream(new ObjectInputStream(input)).toString());
+        List<String> temp = new ArrayList<>();
         if (channel.getClusterName().equals("StackCluster"))
         {
             synchronized(replStack) {
-                replStack = (ReplStack<String>)Util.objectFromStream(new DataInputStream(input));
+                temp = (List<String>)Util.objectFromStream(new ObjectInputStream(input));
+                Iterator<String> iter = temp.iterator();
+                while (iter.hasNext())
+                {
+                    String s = iter.next();
+                    replStack.push(s);
+                }
             }
         }
         else if (channel.getClusterName().equals("SetCluster"))
         {
             synchronized(replSet) {
-                replSet = (ReplSet<String>)Util.objectFromStream(new DataInputStream(input));
+                temp = (List<String>)Util.objectFromStream(new ObjectInputStream(input));
+                Iterator<String> iter = temp.iterator();
+                while (iter.hasNext())
+                {
+                    String s = iter.next();
+                    replSet.add(s);
+                }
             }
         }
+        System.out.println("Getting " + temp.size() + " pieces of shit");
     }
 
 
@@ -112,23 +171,37 @@ public class SimpleClient extends ReceiverAdapter {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String line = in.readLine();
         while (!line.equals("quit"))
-            if (line.substring(0, line.indexOf(' ')).equals("add")) {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("add ")
-                        .append(line.substring(line.indexOf(' ')));
-                sendMessage(line);
-                replSet.add(line.substring(line.indexOf(' ')));
+        {
+            try {
+                if (line.substring(0, line.indexOf(' ')).equals("add")) {
+                    System.out.println("Sent message : "+line);
+                    sendMessage(line);
+                    replSet.add(line.substring(line.indexOf(' ')+1));
+                }
+                else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
+                    System.out.println("Sent message : "+line);
+                    sendMessage(line);
+                    if (replSet.remove(line.substring(line.indexOf(' ')+1)))
+                        System.out.println(line.substring(line.indexOf(' ')+1)+" has been removed");
+                    else
+                        System.err.println(line.substring(line.indexOf(' ')+1)+" cannot removed");
+                }
+                else if (line.substring(0, line.indexOf(' ')).equals("contains")) {
+                    if (replSet.contains(line.substring(line.indexOf(' ')+1)))
+                        System.out.println(line.substring(line.indexOf(' ')+1)+" belongs in set");
+                    else
+                        System.err.println(line.substring(line.indexOf(' ')+1)+" not belongs in set");
+                }
             }
-            else if (line.substring(0, line.indexOf(' ')).equals("remove")) {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("add ")
-                        .append(line.substring(line.indexOf(' ')));
-                sendMessage(line);
-                replSet.add(line.substring(line.indexOf(' ')));
+            catch (StringIndexOutOfBoundsException e )
+            {
+                System.err.println("Method unknown");
             }
-            else if (line.substring(0, line.indexOf(' ')).equals("top")) {
-                System.out.println(replStack.top());
+            finally {
+                line = in.readLine();
             }
+        }
+
     }
 
     public void sendMessage(String line) throws Exception {
@@ -140,23 +213,36 @@ public class SimpleClient extends ReceiverAdapter {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         String line = in.readLine();
         while (!line.equals("quit"))
-            if (line.substring(0, line.indexOf(' ')).equals("push")) {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("add ")
-                        .append(line.substring(line.indexOf(' ')));
-                sendMessage(line);
-                replStack.push(line.substring(line.indexOf(' ')));
+        {
+            try {
+                if (line.contains("push")) {
+                    System.out.println("Sent message : "+line);
+                    sendMessage(line);
+                    replStack.push(line.substring(line.indexOf(' ') + 1));
+                }
+                else if (line.equals("pop")) {
+                    System.out.println("Sent message : "+line);
+                    sendMessage(line);
+                    String poppedString = (String) replStack.pop();
+                    System.out.println("Popped string = "+poppedString);
+                }
+                else if (line.equals("top")) {
+                    System.out.println(replStack.top());
+                }
             }
-            else if (line.substring(0, line.indexOf(' ')).equals("pop")) {
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.append("add ")
-                        .append(line.substring(line.indexOf(' ')));
-                sendMessage(line);
-                replStack.push(line.substring(line.indexOf(' ')));
+            catch (Exception e)
+            {
+                if (e.equals(new StringIndexOutOfBoundsException()))
+                    System.err.println("Method unknown");
+                if (e.equals(new java.util.EmptyStackException()))
+                    System.err.println("Empty stack");
+                else System.err.println(e.toString());
             }
-            else if (line.substring(0, line.indexOf(' ')).equals("top")) {
-                System.out.println(replStack.top());
+            finally {
+                line = in.readLine();
             }
+        }
+
     }
 
 }

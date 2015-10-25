@@ -30,4 +30,14 @@ public class ReplStack<T> {
     {
         return stack.peek();
     }
+
+    public int size()
+    {
+        return stack.size();
+    }
+
+    public boolean isEmpty()
+    {
+        return stack.isEmpty();
+    }
 }

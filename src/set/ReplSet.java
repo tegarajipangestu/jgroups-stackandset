@@ -1,5 +1,6 @@
 package set;
 
+import java.util.Iterator;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -18,12 +19,27 @@ public class ReplSet<T> {
     {
         set.add(element);
     }
-    public void contains(T element)
+    public boolean contains(T element)
     {
-        set.contains(element);
+        return set.contains(element);
     }
     public boolean remove(T element)
     {
         return set.remove(element);
+    }
+
+    public int size()
+    {
+        return set.size();
+    }
+
+    public boolean isEmpty()
+    {
+        return set.isEmpty();
+    }
+
+    public Iterator<T> getIterator()
+    {
+        return set.iterator();
     }
 }
